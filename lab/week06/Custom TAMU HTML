@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Micheal Cabrera TAMU Map</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+    <style>
+      #mapid {
+        height: 600px;
+        width: 100%;
+      }
+
+      .info {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: rgba(255,255,255,0.9);
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        border-radius: 5px;
+      }
+
+      .info h4 {
+        margin: 0 0 5px;
+        color: #800000;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Micheal Cabrera TAMU Map</h1>
+    <div id="mapid"></div>
+
+    <!-- External GeoJSON -->
+    <script src="tamubuildings.js"></script>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+      // Zoom to TAMU Campus
+      var map = L.map('mapid').setView([30.6188, -96.3365], 16);
+
+      // Base map
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Info Control
+      var info = L.control();
+
+      info.onAdd = function(map) {
+        this._div = L.DomUtil.create('div', 'info');
+        this.update();
+        return this._div;
+      };
+
+      info.update = function(props) {
+        this._div.innerHTML = '<h4>TAMU Building Info</h4>' +
+          (props ?
+            '<b>' + props.BLDG_NAME + '</b><br/>Abbr: ' + props.BLDG_ABBR :
+            'Hover over a building');
+      };
+
+      info.addTo(map);
+
+      // Building Style (Maroon)
+      function style(feature) {
+        return {
+          weight: 2,
+          color: '#800000',
+          fillColor: '#800000',
+          fillOpacity: 0.6
+        };
+      }
+
+      // Highlight on Hover
+      function highlightFeature(e) {
+        var layer = e.target;
+
+        layer.setStyle({
+          weight: 4,
+          color: '#000',
+          fillOpacity: 0.9
+        });
+
+        layer.bringToFront();
+        info.update(layer.feature.properties);
+      }
+
+      // Reset highlight
+      function resetHighlight(e) {
+        geojson.resetStyle(e.target);
+        info.update();
+      }
+
+      // Zoom on Click
+      function zoomToFeature(e) {
+        map.fitBounds(e.target.getBounds());
+      }
+
+      // Attach events
+      function onEachFeature(feature, layer) {
+        layer.on({
+          mouseover: highlightFeature,
+          mouseout: resetHighlight,
+          click: zoomToFeature
+        });
+      }
+
+      // Add GeoJSON Layer
+      var geojson = L.geoJSON(tamuBuildings, {
+        style: style,
+        onEachFeature: onEachFeature
+      }).addTo(map);
+
+    </script>
+  </body>
+</html>
